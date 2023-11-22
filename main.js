@@ -1,15 +1,17 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow } = require("electron");
 const mineflayer = require("mineflayer");
 const path = require("node:path");
-const nickname = "TechGamersTV";
-const username = "awddddd";
+const Nicks = require("./electron/nicks");
+
+const nickname = Nicks.PlayerNick;
+const username = Nicks.BotNick;
 
 // electron
 let mainWindow;
 const createWindows = () => {
   mainWindow = new BrowserWindow({
-    width: 880,
-    height: 600,
+    width: 1080,
+    height: 720,
     icon: path.join(__dirname, "build", "favicon.icon"),
     webPreferences: {
       nodeIntegration: true,

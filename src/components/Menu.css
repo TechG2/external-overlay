@@ -12,3 +12,11 @@
     transform: translateX(-50%);
     overflow-y: auto;
 }
+
+.lowerStats {
+    color: #fff;
+    margin-left: 10%;
+}
+.lowerStats p span {
+    padding: 10px 100px 10px 10px;
+}

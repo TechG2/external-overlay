@@ -32,29 +32,57 @@ function Menu() {
   return (
     <>
       <div className="statsContainer">
-        <h1 style={{ color: "#fff" }}>Stats Player:</h1>
+        <h1 style={{ color: "#fff", textAlign: "center" }}>Stats Player:</h1>
         {!playersStats || playersStats.length === 0 ? (
           <h1
             style={{
               color: "#fff",
               fontStyle: "italic",
               fontSize: "16px",
+              textAlign: "center",
             }}
           >
             Nessun player trovato
           </h1>
         ) : (
-          playersStats.map((player) => (
+          <div className="lowerStats">
             <StatsCard
-              key={player.name}
-              name={player.name}
-              level={player.level}
-              kills={player.kills}
-              wins={player.wins}
-              deaths={player.deaths}
-              winstreak={player.winstreak}
+              name="Player: "
+              level="Level: "
+              kd="K/D: "
+              fkd="FK/D: "
+              wins="Wins: "
+              games="Games: "
+              ws="WS: "
+              maxws="Max WS: "
+              type="0"
             />
-          ))
+
+            {playersStats.map((player) => (
+              <StatsCard
+                key={player.name}
+                name={player.name}
+                level={player.level}
+                kd={
+                  Math.round(
+                    (player.kills / player.deaths + Number.EPSILON) * 100
+                  ) / 100
+                }
+                fkd={
+                  Math.round(
+                    (player.final_kills / player.final_deaths +
+                      Number.EPSILON) *
+                      100
+                  ) / 100
+                }
+                wins={player.wins}
+                games={player.played}
+                ws={player.winstreak}
+                maxws={player.h_winstreak}
+                type="1"
+              />
+            ))}
+          </div>
         )}
       </div>
     </>

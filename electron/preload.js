@@ -1,3 +1,1 @@
-window.addEventListener("DOMContentLoaded", () => {
-  console.log("cisaooo");
-});
+window.addEventListener("DOMContentLoaded", () => {});

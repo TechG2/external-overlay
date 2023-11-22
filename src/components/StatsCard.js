@@ -4,25 +4,34 @@ function StatsCard(props) {
   return (
     <>
       <div className="statsCard">
-        <div className="statsName">
-          <span id="name">{props.name}</span>
-          <span id="level">Level {props.level}</span>
-        </div>
-        <div className="statsOther">
-          <span id="kills">
-            Kills: <strong>{props.kills}</strong>
-          </span>
-          <span id="wins">
-            Wins: <strong>{props.wins}</strong>
-          </span>
-          <span id="deaths">
-            Deaths: <strong>{props.deaths}</strong>
-          </span>
-          <p id="winstreak">
-            Winstrak: <strong>{props.winstreak}</strong>
-          </p>
+        <div className="statsContent">
+          <div id="level">
+            <span>
+              {props.type === "1" ? `[${props.level}✰]` : null}
+              <span id="name">{props.name}</span>
+            </span>
+          </div>
+          <div id="kd">
+            <span>{props.kd}</span>
+          </div>
+          <div id="fkd">
+            <span>{props.fkd}</span>
+          </div>
+          <div id="wins">
+            <span>{props.wins}</span>
+          </div>
+          <div id="games">
+            <span>{props.games}</span>
+          </div>
+          <div id="ws">
+            <span>{props.ws}</span>
+          </div>
+          <div id="maxws">
+            <span>{props.maxws}</span>
+          </div>
         </div>
       </div>
+      {props.type === "0" ? <br /> : null}
     </>
   );
 }
