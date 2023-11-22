@@ -1,0 +1,30 @@
+.statsCard {
+    color: #fff;
+    display: inline-block;
+    background: rgba(4, 44, 107);
+    padding: 15px;
+    font-size: 16px;
+    border-radius: 10px;
+    margin: 25px;
+}
+.statsCard #name {
+    font-size: 25px;
+    font-weight: bolder;
+}
+
+.statsName {
+    font-size: 20px;
+    padding: 10px;
+}
+.statsName span {
+    padding: 0px 10px 5px 10px;
+    display: block;
+}
+
+.statsOther {
+    padding: 5px;
+}
+.statsOther span, p {
+    padding-left: 10px;
+    font-weight: 200;
+}
