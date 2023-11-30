@@ -1,6 +1,6 @@
 const Nicks = {
-  PlayerNick: "TechGamersTV",
-  BotNick: "awddddd",
+  PlayerNick: "",
+  BotNick: "",
 };
 
 module.exports = Nicks;
