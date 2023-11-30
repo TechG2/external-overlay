@@ -33,42 +33,149 @@ const client = mineflayer.createBot({
   username: username,
 });
 
-// JoinManage
+// Join/Quit Manager
+let playersData = [];
 function manageJoin(current) {
   const isGameJoin = current % 2 === 1 ? true : false;
 
   if (isGameJoin) {
+    playersData = [];
+
     const players = Object.keys(client.players).filter(
       (player) => player !== username
     );
-    const playersData = [];
 
     players.forEach(async (player) => {
       fetch(`https://api.coralmc.it/api/user/${player}`)
         .then(async (data) => {
-          const jsonData = await data.json();
+          let jsonData = await data.json();
+          if (!jsonData.bedwars)
+            return playersData.push({
+              bedwars: {
+                name: player,
+                level: 0,
+                kills: 0,
+                deaths: 0,
+                final_kills: 0,
+                final_deaths: 0,
+                wins: 0,
+                played: 0,
+                winstreak: 0,
+                h_winstreak: 0,
+              },
+            });
+
           playersData.push(jsonData);
         })
         .catch(() => {
-          playersData.push({
-            name: player,
-            level: 0,
-            kills: 0,
-            wins: 0,
-            deaths: 0,
-            winstrak: 0,
+          return playersData.push({
+            bedwars: {
+              name: player,
+              level: 0,
+              kills: 0,
+              deaths: 0,
+              final_kills: 0,
+              final_deaths: 0,
+              wins: 0,
+              played: 0,
+              winstreak: 0,
+              h_winstreak: 0,
+            },
           });
         });
     });
     const interval = setInterval(() => {
       if (playersData.length === players.length) {
         clearInterval(interval);
-        client.chat(`/leave`);
         mainWindow.webContents.send("send_players", playersData);
       }
     }, 500);
   }
 }
+
+client.on("message", (message) => {
+  const json = message.json;
+
+  if (!json.extra || !json.extra[1] || !json.extra[1].text) return;
+
+  if (
+    json.extra[1].text.includes("uscito (") ||
+    (json.extra[1].text.includes("entrato (") &&
+      json.extra[1].color === "yellow")
+  ) {
+    const player = json.extra[0].text;
+    if (player === username) return;
+
+    if (json.extra[1].text.includes("entrato (")) {
+      if (player === nickname) return;
+
+      fetch(`https://api.coralmc.it/api/user/${player}`)
+        .then(async (data) => {
+          let jsonData = await data.json();
+
+          if (!jsonData.bedwars) {
+            playersData.push({
+              bedwars: {
+                name: player,
+                level: 0,
+                kills: 0,
+                deaths: 0,
+                final_kills: 0,
+                final_deaths: 0,
+                wins: 0,
+                played: 0,
+                winstreak: 0,
+                h_winstreak: 0,
+              },
+            });
+          } else {
+            playersData.push(jsonData);
+          }
+        })
+        .catch(() => {
+          playersData.push({
+            bedwars: {
+              name: player,
+              level: 0,
+              kills: 0,
+              deaths: 0,
+              final_kills: 0,
+              final_deaths: 0,
+              wins: 0,
+              played: 0,
+              winstreak: 0,
+              h_winstreak: 0,
+            },
+          });
+        });
+    }
+
+    if (json.extra[1].text.includes("uscito (")) {
+      if (player === nickname) {
+        client.chat("/leave");
+      } else {
+        playersData.forEach((playerData) => {
+          const playerName = playerData.bedwars.name;
+          if (playerName !== player) return;
+
+          playersData.splice(playersData.indexOf(playerData), 1);
+          mainWindow.webContents.send("send_players", playersData);
+        });
+      }
+    }
+
+    mainWindow.webContents.send("send_players", playersData);
+  } else if (
+    json.extra[0].text.includes("La partita inizia tra ") &&
+    json.extra[0].color === "yellow"
+  ) {
+    const coutdown = parseInt(json.extra[1].text);
+
+    if (!isNaN(coutdown) && coutdown < 5) {
+      client.chat(`/leave`);
+    }
+  }
+});
 
 // Spawn Manager
 let time = 0;

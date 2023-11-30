@@ -64,16 +64,20 @@ function Menu() {
                 name={player.name}
                 level={player.level}
                 kd={
-                  Math.round(
-                    (player.kills / player.deaths + Number.EPSILON) * 100
-                  ) / 100
+                  player.kills === 0 && player.deaths === 0
+                    ? 0
+                    : Math.round(
+                        (player.kills / player.deaths + Number.EPSILON) * 100
+                      ) / 100
                 }
                 fkd={
-                  Math.round(
-                    (player.final_kills / player.final_deaths +
-                      Number.EPSILON) *
-                      100
-                  ) / 100
+                  player.final_kills === 0 && player.final_deaths === 0
+                    ? 0
+                    : Math.round(
+                        (player.final_kills / player.final_deaths +
+                          Number.EPSILON) *
+                          100
+                      ) / 100
                 }
                 wins={player.wins}
                 games={player.played}

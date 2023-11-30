@@ -7,7 +7,7 @@ function StatsCard(props) {
         <div className="statsContent">
           <div id="level">
             <span>
-              {props.type === "1" ? `[${props.level}✰]` : null}
+              {props.type === "1" ? `[${props.level}✰] ` : null}
               <span id="name">{props.name}</span>
             </span>
           </div>
