@@ -1,6 +1,6 @@
 # External Overlay
 
-An External Overlay for the CoralMC stats!
+An External Overlay for check stats of a specific server!
 
 # Usage
 
