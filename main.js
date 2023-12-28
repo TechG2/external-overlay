@@ -176,7 +176,7 @@ client.on("message", async (message) => {
 let time = 0;
 client.on("spawn", () => {
   if (time === 0) {
-    client.chat("/l checkStats");
+    client.chat("/l ?");
     console.log(`Logged as ${username}`);
   }
   time++;
