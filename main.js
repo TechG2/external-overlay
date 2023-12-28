@@ -35,40 +35,24 @@ const client = mineflayer.createBot({
 
 // Join/Quit Manager
 let playersData = [];
-function manageJoin(current) {
-  const isGameJoin = current % 2 === 1 ? true : false;
+async function manageJoin() {
+  // Check if it's a game join event
+  console.log("sended data");
+  playersData = [];
 
-  if (isGameJoin) {
-    playersData = [];
+  // Get the list of players
+  const players = Object.keys(client.players);
 
-    const players = Object.keys(client.players).filter(
-      (player) => player !== username
-    );
+  try {
+    // Fetch player
+    const fetchPromises = players.map(async (player) => {
+      const response = await fetch(`https://api.coralmc.it/api/user/${player}`);
+      const jsonData = await response.json();
 
-    players.forEach(async (player) => {
-      fetch(`https://api.coralmc.it/api/user/${player}`)
-        .then(async (data) => {
-          let jsonData = await data.json();
-          if (!jsonData.bedwars)
-            return playersData.push({
-              bedwars: {
-                name: player,
-                level: 0,
-                kills: 0,
-                deaths: 0,
-                final_kills: 0,
-                final_deaths: 0,
-                wins: 0,
-                played: 0,
-                winstreak: 0,
-                h_winstreak: 0,
-              },
-            });
-
-          playersData.push(jsonData);
-        })
-        .catch(() => {
-          return playersData.push({
+      // Check for bedwars data
+      return jsonData.bedwars
+        ? jsonData
+        : {
             bedwars: {
               name: player,
               level: 0,
@@ -81,58 +65,56 @@ function manageJoin(current) {
               winstreak: 0,
               h_winstreak: 0,
             },
-          });
-        });
+          };
     });
-    const interval = setInterval(() => {
-      if (playersData.length === players.length) {
-        clearInterval(interval);
-        mainWindow.webContents.send("send_players", playersData);
-      }
-    }, 500);
+
+    // Wait for all fetch request
+    const results = (await Promise.all(fetchPromises)).filter(
+      (result) => result
+    );
+
+    // Update playersData
+    playersData = [...playersData, ...results];
+  } catch (error) {
+    // Handle errors
+    console.error("Parallel request error:", error);
   }
+
+  // Send the aggregated playersData to the main window
+  mainWindow.webContents.send("send_players", playersData);
 }
 
-client.on("message", (message) => {
+client.on("message", async (message) => {
   const json = message.json;
 
+  // Check for valid JSON properties
   if (!json.extra || !json.extra[1] || !json.extra[1].text) return;
 
+  // Check for player entry or exit events
   if (
     json.extra[1].text.includes("uscito (") ||
     (json.extra[1].text.includes("entrato (") &&
       json.extra[1].color === "yellow")
   ) {
     const player = json.extra[0].text;
+
+    // Ignore the current user
     if (player === username) return;
 
+    // Handle player entry event
     if (json.extra[1].text.includes("entrato (")) {
+      // Ignore entries of the bot itself
       if (player === nickname) return;
 
-      fetch(`https://api.coralmc.it/api/user/${player}`)
-        .then(async (data) => {
-          let jsonData = await data.json();
+      try {
+        // Fetch player data from the API
+        const response = await fetch(
+          `https://api.coralmc.it/api/user/${player}`
+        );
+        const jsonData = await response.json();
 
-          if (!jsonData.bedwars) {
-            playersData.push({
-              bedwars: {
-                name: player,
-                level: 0,
-                kills: 0,
-                deaths: 0,
-                final_kills: 0,
-                final_deaths: 0,
-                wins: 0,
-                played: 0,
-                winstreak: 0,
-                h_winstreak: 0,
-              },
-            });
-          } else {
-            playersData.push(jsonData);
-          }
-        })
-        .catch(() => {
+        // Check if bedwars data is available, else create default
+        if (!jsonData.bedwars) {
           playersData.push({
             bedwars: {
               name: player,
@@ -147,33 +129,46 @@ client.on("message", (message) => {
               h_winstreak: 0,
             },
           });
-        });
-    }
-
-    if (json.extra[1].text.includes("uscito (")) {
-      if (player === nickname) {
-        client.chat("/leave");
-      } else {
-        playersData.forEach((playerData) => {
-          const playerName = playerData.bedwars.name;
-          if (playerName !== player) return;
-
-          playersData.splice(playersData.indexOf(playerData), 1);
-          mainWindow.webContents.send("send_players", playersData);
+        } else {
+          playersData.push(jsonData);
+        }
+      } catch (error) {
+        // Log and handle errors during fetch
+        console.error(`Error fetching data for ${player}: ${error.message}`);
+        playersData.push({
+          bedwars: {
+            name: player,
+            level: 0,
+            kills: 0,
+            deaths: 0,
+            final_kills: 0,
+            final_deaths: 0,
+            wins: 0,
+            played: 0,
+            winstreak: 0,
+            h_winstreak: 0,
+          },
         });
       }
     }
 
-    mainWindow.webContents.send("send_players", playersData);
-  } else if (
-    json.extra[0].text.includes("La partita inizia tra ") &&
-    json.extra[0].color === "yellow"
-  ) {
-    const coutdown = parseInt(json.extra[1].text);
-
-    if (!isNaN(coutdown) && coutdown < 5) {
-      client.chat(`/leave`);
+    // Handle player exit event
+    if (json.extra[1].text.includes("uscito (")) {
+      // If the bot left, perform /leave command
+      if (player !== nickname) {
+        // Find and remove the player from the playersData array
+        const playerIndex = playersData.findIndex(
+          (playerData) => playerData.bedwars.name === player
+        );
+        if (playerIndex !== -1) {
+          playersData.splice(playerIndex, 1);
+          mainWindow.webContents.send("send_players", playersData);
+        }
+      }
     }
+
+    // Send data
+    mainWindow.webContents.send("send_players", playersData);
   }
 });
 
@@ -183,27 +178,47 @@ client.on("spawn", () => {
   if (time === 0) {
     client.chat("/l checkStats");
     console.log(`Logged as ${username}`);
-  } else if (time === 1) {
-    client.setQuickBarSlot(4);
-    client.activateItem();
-  } else if (time > 2) {
-    manageJoin(time);
   }
-
   time++;
 });
 
-// Window Manager
-client.on("windowOpen", (window) => {
-  const getBed = window.slots
-    .filter((slot) => slot)
-    .filter((slot) => slot.name === "red_bed")[0];
-  if (getBed) client.clickWindow(getBed.slot, 1, 0);
+// Player send and exit manager
+client.on("message", async (message) => {
+  const json = message.json;
+
+  if (
+    json.extra &&
+    json.extra[0].text === username &&
+    json.extra[1].text.includes("entrato")
+  ) {
+    setTimeout(async () => {
+      await manageJoin(time);
+    }, 250);
+  } else if (
+    json.extra &&
+    json.extra[0].text === nickname &&
+    json.extra[1].text.includes("uscito")
+  ) {
+    console.log("uscito");
+    client.chat(`/l`);
+    mainWindow.webContents.send("send_players", []);
+  } else if (
+    json.extra &&
+    json.extra[0].text.includes("La partita inizia tra ") &&
+    json.extra[0].color === "yellow"
+  ) {
+    const coutdown = parseInt(json.extra[1].text);
+
+    if (!isNaN(coutdown) && coutdown < 5) {
+      client.chat(`/leave`);
+      mainWindow.webContents.send("send_players", []);
+    }
+  }
 });
 
 // Manage bot commands
-client.on("message", (jsonMessage) => {
-  const messageJson = jsonMessage.json;
+client.on("message", (message) => {
+  const messageJson = message.json;
 
   if (!messageJson.extra || !messageJson.extra[1]) return;
 
@@ -215,9 +230,12 @@ client.on("message", (jsonMessage) => {
     }
     if (
       message.text === "-left" ||
+      message.text === "-l" ||
       message.text === "-leave" ||
       message.text === "-quit"
-    )
+    ) {
       client.chat(`/l`);
+      mainWindow.webContents.send("send_players", []);
+    }
   }
 });
